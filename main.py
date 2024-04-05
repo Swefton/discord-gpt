@@ -3,7 +3,17 @@ import openai
 from tokens import TOKEN, OPENAI_API_KEY
 
 bot = discord.Bot(intents=discord.Intents.all())
-openai.api_key = OPENAI_API_KEY
+client = openai.OpenAI(api_key = OPENAI_API_KEY)
+
+
+def ask_question(message):
+    completion = client.chat.completions.create(
+    model="gpt-3.5-turbo",
+    messages= message
+    )
+
+    return completion.choices[0].message.content
+
 
 @bot.event
 async def on_ready():
@@ -13,12 +23,11 @@ async def on_ready():
 async def response(ctx, prompt: str):
     user = await bot.fetch_user(ctx.author.id)
     thread = await ctx.send(f"{prompt}")
-    new_thread = await thread.create_thread(name="Echo Thread", auto_archive_duration=60)
-    
-    
-    
-    await new_thread.send("RESPONSE")
-    await ctx.respond(f"Thread created for {user.mention}!")
+    new_thread = await thread.create_thread(name="Echo Thread", auto_archive_duration=60)    
+    initial_response = ask_question([{"role": "user", "content": prompt}])
+    await new_thread.send(initial_response)
+    if initial_response:
+        await ctx.respond(f"Thread created for {user.mention}!")
 
     @bot.event
     async def on_message(message):
@@ -29,16 +38,15 @@ async def response(ctx, prompt: str):
                 gpt_message = list()
                 
                 OG_promp = await ctx.fetch_message(message.channel.id)
-                print(OG_promp.content)
                 gpt_message.append({"role": "user", "content": OG_promp.content})
                 
                 for channel_message in messages[1:]:
                     if channel_message.author == bot.user:
-                        gpt_message.append({"role": "bot", "content": channel_message.content})
+                        gpt_message.append({"role": "assistant", "content": channel_message.content})
                     else:
                         gpt_message.append({"role": "user", "content": channel_message.content})
-
-                await new_thread.send("RESPONSE")
+                response = ask_question(gpt_message)
+                await new_thread.send(response)
 
 
 
