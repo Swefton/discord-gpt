@@ -1,57 +1,45 @@
 import discord
-from discord import app_commands
-from openai import OpenAI
-from tokens import TOKEN, GUILD, OPENAI_API_KEY
+import openai
+from tokens import TOKEN, OPENAI_API_KEY
 
-intents = discord.Intents.default()
-client = discord.Client(intents=intents)
-tree = app_commands.CommandTree(client)
+bot = discord.Bot(intents=discord.Intents.all())
+openai.api_key = OPENAI_API_KEY
 
-# Add the guild ids in which the slash command will appear.
-# If it should be in all, remove the argument, but note that
-# it will take some time (up to an hour) to register the
-# command if it's for all guilds.
-
-@client.event
-async def on_message(message):
-    if message.author == client.user:
-        return
-    print(message.content) 
-
-@tree.command(
-    name="commandname",
-    description="My first application Command",
-    guild=discord.Object(id=GUILD)
-)
-async def first_command(interaction, optional_param1 : str = "test", optional_param2 : str = ""):
-    await interaction.response.send_message(f"Hello! {optional_param1} {optional_param2}")
-    print(interaction.data)
-    print(type(interaction.channel), interaction.channel)
-    for i in interaction.channel.members:
-        print(i)
-    await interaction.channel.create_thread(name="test", message=interaction.message, reason="gpt", )   
- 
-     
-@client.event
+@bot.event
 async def on_ready():
-    await tree.sync(guild=discord.Object(id=GUILD))
-    print("Ready!")
-    
+    print(f"{bot.user} is ready and online!")
 
+@bot.slash_command(name="prompt", description="ask gpt-4 for a response (future)")
+async def response(ctx, prompt: str):
+    user = await bot.fetch_user(ctx.author.id)
+    thread = await ctx.send(f"{prompt}")
+    new_thread = await thread.create_thread(name="Echo Thread", auto_archive_duration=60)
     
     
-client.run(TOKEN)
-   
-   
     
-'''
-response = client.chat.completions.create(
-  model="gpt-3.5-turbo",
-  messages=[
-    {"role": "system", "content": "You are a helpful assistant."},
-    {"role": "user", "content": "Who won the world series in 2020?"},
-    {"role": "assistant", "content": "The Los Angeles Dodgers won the World Series in 2020."},
-    {"role": "user", "content": "Where was it played?"}
-  ]
-)
-'''
+    await new_thread.send("RESPONSE")
+    await ctx.respond(f"Thread created for {user.mention}!")
+
+    @bot.event
+    async def on_message(message):
+        if isinstance(message.channel, discord.Thread) and message.channel.id == new_thread.id:
+            if message.author != bot.user:
+                messages = await message.channel.history(limit=200).flatten()
+                messages.reverse()
+                gpt_message = list()
+                
+                OG_promp = await ctx.fetch_message(message.channel.id)
+                print(OG_promp.content)
+                gpt_message.append({"role": "user", "content": OG_promp.content})
+                
+                for channel_message in messages[1:]:
+                    if channel_message.author == bot.user:
+                        gpt_message.append({"role": "bot", "content": channel_message.content})
+                    else:
+                        gpt_message.append({"role": "user", "content": channel_message.content})
+
+                await new_thread.send("RESPONSE")
+
+
+
+bot.run(TOKEN)
