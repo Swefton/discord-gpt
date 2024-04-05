@@ -23,7 +23,7 @@ async def on_ready():
 async def response(ctx, prompt: str):
     user = await bot.fetch_user(ctx.author.id)
     thread = await ctx.send(f"{prompt}")
-    new_thread = await thread.create_thread(name="Echo Thread", auto_archive_duration=60)    
+    new_thread = await thread.create_thread(name=user.global_name, auto_archive_duration=60)    
     initial_response = ask_question([{"role": "user", "content": prompt}])
     await new_thread.send(initial_response)
     if initial_response:
