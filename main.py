@@ -1,5 +1,6 @@
 import discord
 import openai
+import time
 from tokens import TOKEN, OPENAI_API_KEY
 
 bot = discord.Bot(intents=discord.Intents.all())
@@ -22,12 +23,11 @@ async def on_ready():
 @bot.slash_command(name="prompt", description="ask gpt-4 for a response (future)")
 async def response(ctx, prompt: str):
     user = await bot.fetch_user(ctx.author.id)
+    await ctx.respond(f"Creating thread for {user.mention}!")
     thread = await ctx.send(f"{prompt}")
     new_thread = await thread.create_thread(name=user.global_name, auto_archive_duration=60)    
     initial_response = ask_question([{"role": "user", "content": prompt}])
     await new_thread.send(initial_response)
-    if initial_response:
-        await ctx.respond(f"Thread created for {user.mention}!")
 
     @bot.event
     async def on_message(message):
