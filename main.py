@@ -8,7 +8,7 @@ client = openai.OpenAI(api_key = OPENAI_API_KEY)
 
 def ask_question(message):
     completion = client.chat.completions.create(
-    model="gpt-3.5-turbo",
+    model="gpt-4",
     messages= message
     )
 
