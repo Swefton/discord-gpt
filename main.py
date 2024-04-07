@@ -5,7 +5,7 @@ from tokens import TOKEN, OPENAI_API_KEY
 bot = discord.Bot(intents=discord.Intents.all())
 client = openai.OpenAI(api_key=OPENAI_API_KEY)
 
-# Dictionary to store prompts mapped to thread IDs
+processing_emoji = '⌛'
 prompt_map = {}
 
 
@@ -31,8 +31,19 @@ async def response(ctx, prompt: str):
 
     prompt_map[new_thread.id] = prompt
 
+    await thread.add_reaction(processing_emoji)
+    
     initial_response = ask_question([{"role": "user", "content": prompt}])
-    await new_thread.send(initial_response)
+    
+    if len(initial_response) > 2000:
+        chunks = [initial_response[i:i+2000] for i in range(0, len(initial_response), 2000)]
+        
+        for chunk in chunks:
+            await new_thread.send(chunk)
+    else:
+        await new_thread.send(initial_response)
+
+    await thread.remove_reaction(processing_emoji, bot.user)
 
 
 @bot.event
@@ -51,9 +62,22 @@ async def on_message(message):
                         gpt_message.append({"role": "assistant", "content": channel_message.content})
                     else:
                         gpt_message.append({"role": "user", "content": channel_message.content})
+               
+                
+                await messages[-1].add_reaction(processing_emoji)
                 
                 response = ask_question(gpt_message)
-                await message.channel.send(response)
+                
+                if len(response) > 2000:
+                    chunks = [response[i:i+2000] for i in range(0, len(response), 2000)]
+                    
+                    for chunk in chunks:
+                        await message.channel.send(chunk)
+                else:
+                    await message.channel.send(response)
+                
+                await messages[-1].remove_reaction(processing_emoji, bot.user)
+
 
 
 @bot.event
