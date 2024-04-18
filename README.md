@@ -28,4 +28,4 @@ Contributions are welcome! Feel free to submit pull requests or open issues if y
 
 ## TODO
 
-- [ ] Add a check for user/system message before giving a response. Relevant discussion is available [here]([https://discord.com/channels/826862973518610493/1225906013723557989/1230631313686528101](https://cdn.discordapp.com/attachments/1225906013723557989/1230631313514692628/image.png?ex=663405b9&is=662190b9&hm=118e811aff96bfbf36ad473920ea725fd02d540cfebe80185fd4f7bae65988f4&))
+- [ ] Add a check for user/system message before giving a response. Relevant discussion is available [here](https://cdn.discordapp.com/attachments/1225906013723557989/1230631313514692628/image.png?ex=663405b9&is=662190b9&hm=118e811aff96bfbf36ad473920ea725fd02d540cfebe80185fd4f7bae65988f4&)
